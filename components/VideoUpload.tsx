@@ -14,6 +14,8 @@ const VideoUpload = () => {
             return
         }
 
+        setSubmitting(true)
+
         data.append("file", file)
 
         const config: AxiosRequestConfig = {
@@ -26,22 +28,15 @@ const VideoUpload = () => {
             }
         }
         try{
-            setSubmitting(true)
-            console.log('Request made')
             const response = await axios.post('/api/videos', data, config)
             console.log(response)
-        }
-        catch(e:any){
+        }catch(e:any){
             setError(e.message)
             console.log(e)
         }finally{
-            setProgress(0)
             setSubmitting(false)
+            setProgress(0)
         }
-
-
-        
-
     }
 
     const handleSetFile = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -58,11 +53,8 @@ const VideoUpload = () => {
         <form action='POST'>
             <label htmlFor="file">File</label>
             <input type='file' id='file' accept='.mp4' onChange={handleSetFile}/>
-            <button onClick={(e) => {
-                e.preventDefault()
-                handleSubmit()
-            }}>Upload video</button>
         </form>
+        <button onClick={handleSubmit}>Upload video</button>
     </>
   )
 }

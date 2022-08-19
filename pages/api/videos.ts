@@ -6,22 +6,19 @@ import fs from 'fs'
 
 export const config = {
   api: {
-      bodyParser: {
-          sizeLimit: '4000mb' // Set desired value here
-      }
+      bodyParser: false
   }
 }
 
-const getVideoStream = (req: NextApiRequest, res: NextApiResponse) => {
+const uploadVideoStream = (req: NextApiRequest, res: NextApiResponse) => {
   const bb = busboy({headers: req.headers})
 
   bb.on("file", (_, file, info) => {
-    const fileName = info.filename
+    const fileName = `${nanoid()}.mp4`
     console.log(fileName)
     const filePath = `./videos/${fileName}`
 
     const stream = fs.createWriteStream(filePath)
-
     file.pipe(stream)
   })
 
@@ -34,7 +31,7 @@ const getVideoStream = (req: NextApiRequest, res: NextApiResponse) => {
   return
 }
 
-const uploadVideoStream = (req: NextApiRequest, res: NextApiResponse) => {
+const getVideoStream = (req: NextApiRequest, res: NextApiResponse) => {
   
 }
 
@@ -47,5 +44,5 @@ export default function handler(
   else if(req.method === 'POST'){
     return uploadVideoStream(req, res)
   }
-  return res.status(405).send(`Error: ${req.method} `)
+  return res.status(405).json({error: `Method ${req.method} is not allowed`})
 }
