@@ -6,7 +6,6 @@ interface VideoIdType{
 }
 
 const index = ({videoId}: {videoId: VideoIdType}) => {
-    console.log(videoId.id)
   return (
     <VideoPlayer id={videoId.id}/>
   )

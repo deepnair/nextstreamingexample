@@ -1,7 +1,7 @@
 import React from 'react'
 
 const VideoPlayer = ({id}: {id:string}) => {
-    console.log(`Id in videoplayer is ${id}`)
+    
   return (
     <video
         src={`/api/videos?videoId=${id}`}
