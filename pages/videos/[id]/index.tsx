@@ -1,4 +1,5 @@
 import { GetServerSideProps } from "next"
+import { useRouter } from "next/router"
 import VideoPlayer from "../../../components/VideoPlayer"
 
 interface VideoIdType{
@@ -6,8 +7,10 @@ interface VideoIdType{
 }
 
 const index = ({videoId}: {videoId: VideoIdType}) => {
+    const router = useRouter()
+    const {id} = router.query as {id: string}
   return (
-    <VideoPlayer id={videoId.id}/>
+    <VideoPlayer id={id}/>
   )
 }
 
