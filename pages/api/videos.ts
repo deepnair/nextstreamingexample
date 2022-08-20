@@ -50,7 +50,7 @@ const getVideoStream = (req: NextApiRequest, res: NextApiResponse) => {
 
   const chunkEnd = Math.min(chunkStart + CHUNK_SIZE_IN_BYTES, videoSizeInBytes - 1)
 
-  const contentLength = chunkEnd - chunkStart -1
+  const contentLength = chunkEnd - chunkStart +1
 
   const headers = {
     'Content-Range': `bytes ${chunkStart}-${chunkEnd}/${videoSizeInBytes}`,
