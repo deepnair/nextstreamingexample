@@ -15,7 +15,7 @@ const uploadVideoStream = (req: NextApiRequest, res: NextApiResponse) => {
 
   bb.on("file", (_, file, info) => {
     const fileName = `${nanoid()}.mp4`
-    console.log(fileName)
+    
     const filePath = `./videos/${fileName}`
 
     const stream = fs.createWriteStream(filePath)
