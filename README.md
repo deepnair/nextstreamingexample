@@ -1,34 +1,51 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Streaming with Next.js
 
-## Getting Started
+This is based on a tutorial [Build a video stream and stream app with Next.js 12](https://www.youtube.com/watch?v=Jl2OmUqDpEQ&t=1098s) by [TomDoesTech](https://www.youtube.com/c/TomDoesTech).
 
-First, run the development server:
+Objective: Create a means to upload video to a web app and then stream the video back. For this we will be using Next.js, and we will use the apis within Next.js (which runs express in the background) to handle the backend.
 
-```bash
-npm run dev
-# or
-yarn dev
-```
+## Steps
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Setup App
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
+1. Create the app with Next.js:
+    ```
+    yarn create next-app nextstreamingexample --ts
+    ```
+1. Install the dependencies busboy and axios and their types
+    ```
+    yarn add busboy axios && yarn add @types/busboy @types/axios
+    ```
 
-[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
+### Upload Video segment
+1. Rename the hello.ts in the pages/apis folder to videos.ts.
+1. In the export default handler function add different functions to be called if the method is get (view video) or post (upload video). In case the request method is neither, give a status 400 response with a JSON message saying the method is not allowed. The code will look as follows:
+    ```ts
+    export default function handler(req: NextApiRequest, res: NextApiResponse){
+        if(req.method === 'GET'){
+            return getVideoStream(req, res)
+        }else if(req.method === 'POST'){
+            return uploadVideoStream(req, res)
+        }
+        return res.status(405).json({error: `Method ${req.method} is not allowed`})
+    }
+    ```
+    Make sure to use NextApiRequest and NextApiResponse as the types of the request and response rather than NextRequest and NextResponse. Status 405 is used, since it is the status code for method not allowed.
+1. Create an empty uploadVideoStream and getVideoStream functions above the handler function to prevent typescript from yelling at you.
+    ```ts
+    const getVideoStream = () => {
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
+    }
+    const uploadVideoStream = () => {
 
-## Learn More
+    }
+    ```
+1. In the uploadVideoStream function, a fileName needs to be generated, a filePath needs to be created for where the file will go. We will generate the fileName with nanoid so that each file name is unique and they will be stored in a videos folder. So we'll create a videos directory in the root of Next.js as well (is deleted in the repo as we don't want to upload any videos with the repo). The code will look as follows:
+    ```ts
+    const uploadVideoStream = () => {
+        const fileName = `${nanoid()}.mp4`
 
-To learn more about Next.js, take a look at the following resources:
+        const filePath = `./videos/${fileName}`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+        
+    }
