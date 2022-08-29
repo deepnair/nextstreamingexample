@@ -255,7 +255,150 @@ Objective: Create a means to upload video to a web app and then stream the video
         }
     }
     ```
+1. Once this is done, add the videoupload component to the index.tsx so the videoupload component is visible on the home page.
+### Watch video segment
+1. Before the getVideoStream function in the videos.ts, we create a const CHUNK_SIZE_IN_BYTES (it's in caps because it's a constant). We want 1 mb at a time to download, so we choose the size as 100000.
+1. Then we create a const range which we get from req.headers.range. If this range doesn't exist, we must return a 400 status and send a message saying that range has to be mentioned. We will get the chunk start from this so we need the range. The code will look as follows:
+    ```ts
+    const CHUNK_SIZE_IN_BYTES = 100000
 
+    const getVideoStream = (req: NextApiRequest, res: NextApiResponse) => {
+        const range = req.headers.range 
+
+        if(!range){
+            return res.status(400).send('You must provide a range')
+        }
+    }
+    ```
+1. We get the videoId from the req.query.videoId and we the videoPath will be the videoId in the videos folder in mp4 format.
+1. The videoSizeInBytes will be fs.statSync(videoPath).size. Which uses the file system module to find the size of the video file. The code will look as follows:
+    ```ts
+    const videoId = req.query.videoId 
+
+    const videoPath = `./videos/${videoId}.mp4`
+
+    const videoSizeInBytes = fs.statSync(videoPath).size
+    ```
+1. The chunkStart will be a number which we get after removing all alphabets from the range.
+1. The chunkend will be the minimum of the (chunkstart + the chunk size in bytes) and the videoSizeInBytes - 1. The reason this is the case is that the chunk end will either be after 1 MB from the chunk start or the end of the video, whichever is less.
+1. The contentLength is the chunkend - the chunkstart + 1 (because it is zero based rather than length which is not zero based). The code will look as follows:
+    ```ts
+    const chunkStart = Number(range.replace(/\D/g, ""))
+
+    const chunkEnd = Math.min(chunkStart + CHUNK_SIZE_IN_BYTES, videoSizeInBytes - 1)
+
+    const contentLength = chunkEnd - chunkStart +1
+    ```
+1. Then we create a const headers that reflects content-range, accept ranges, content-type, and content-length. We will plug in the variables and write it in where required. The code will look as follows:
+    ```ts
+    const headers = {
+        'Content-Range': `bytes ${chunkStart}-${chunkEnd}/${videoSizeInBytes}`,
+        'Accept-Ranges': 'bytes',
+        'Content-Length': contentLength,
+        'Content-Type': 'video/mp4'
+    }
+    ```
+1. We writeHead with the 206 (partial success) and pass headers to the res.
+1. Then we create a const videoStream which is a createReadStream from fs, which takes an object with start and end properties of chunkStart and chunkEnd respectively.
+1. Finally we pipe the res into the videostream. The code will look as follows:
+    ```ts
+    res.writeHead(206, headers)
+    const videoStream = fs.createReadStream(videoPath, {
+        start: chunkStart,
+        end: chunkEnd
+    })
+
+    videoStream.pipe(res)
+    ```
+    The code for the getVideoStream function will look as follows:
+    ```ts
+    const CHUNK_SIZE_IN_BYTES = 100000
+
+    const getVideoStream = (req: NextApiRequest, res: NextApiResponse) => {
+    const range = req.headers.range 
+
+    if(!range){
+        return res.status(400).send('You must provide a range')
+    }
+
+    const videoId = req.query.videoId 
+
+    const videoPath = `./videos/${videoId}.mp4`
+
+    const videoSizeInBytes = fs.statSync(videoPath).size
+
+    const chunkStart = Number(range.replace(/\D/g, ""))
+
+    const chunkEnd = Math.min(chunkStart + CHUNK_SIZE_IN_BYTES, videoSizeInBytes - 1)
+
+    const contentLength = chunkEnd - chunkStart +1
+
+    const headers = {
+        'Content-Range': `bytes ${chunkStart}-${chunkEnd}/${videoSizeInBytes}`,
+        'Accept-Ranges': 'bytes',
+        'Content-Length': contentLength,
+        'Content-Type': 'video/mp4'
+    }
+
+    res.writeHead(206, headers)
+    const videoStream = fs.createReadStream(videoPath, {
+        start: chunkStart,
+        end: chunkEnd
+    })
+
+    videoStream.pipe(res)
+    }
+    ```
+1. Create a folder called videos in the pages folder, create an [id] folder within it and then create an index.tsx in it. 'rafce' to get a function in it.
+1. We need to get the videoId query that is passed to it either through server side prop's context (using context.query) or through using next/router's useRouter hook and accessing router.query. In the getServerProps instance the code will look as follows:
+    ```jsx
+    interface VideoIdType{
+        id: string
+    }
+    const index = ({videoId}: {videoId: VideoIdType}) => {
+    
+        return (
+            <VideoPlayer id={videoId.id}/>
+        )
+    }
+    export const getServerSideProps: GetServerSideProps = async (context) => {
+        return{
+            props:{
+                videoId: context.query
+            }
+        }
+    }
+    export default index
+    ```
+    In the case of using router, it will look as follows:
+    ```jsx
+    const index = ({videoId}: {videoId: VideoIdType}) => {
+        const router = useRouter()
+        const {id} = router.query as {id: string}
+    return (
+        <VideoPlayer id={videoId.id}/>
+        <VideoPlayer id={id}/>
+    )
+    }
+    ```
+1. Then we create the VideoPlayer component in the components folder. This will take in an id and return a video tag with the src having a videoId query, it will have a width, height, autoplay and controls. (There is no point in autoplaying for the most part since it won't work in browsers like chrome). The code will look as follows:
+    ```jsx
+    const VideoPlayer = ({id}: {id:string}) => {
+    
+    return (
+        <video
+            src={`/api/videos?videoId=${id}`}
+            width='800px'
+            height='auto'
+            controls 
+            autoPlay 
+            id='videoId'
+        />
+    )
+    }
+    
+    export default VideoPlayer
+    ```
 
 
 
